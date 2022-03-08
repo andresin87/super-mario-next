@@ -1,30 +1,45 @@
-import SpriteSheet from "./SpriteSheet.js";
-import { loadImage, loadLevel } from "./loaders.js";
+import { loadLevel } from "./loaders.js";
+import { loadBackgroundSprites, loadMarioSprites } from "./sprites.js";
+import { createBackgroundLayer } from "./layers.js";
+import Compositor from "./Compositor.js";
 
-const drawBackground = (background, context, sprites) => {
-  background.ranges.forEach(([x1, x2, y1, y2]) => {
-    for (let x = x1; x < x2; ++x) {
-      for (let y = y1; y < y2; ++y) {
-        sprites.drawTile(background.tile, context, x, y);
-      }
+const createSpriteLayer = (sprite, pos) => {
+  return (context) => {
+    for (let i = 0; i < 20; i++) {
+      sprite.draw("idle", context, pos.x + i * 16, pos.y);
     }
-  });
+  };
 };
 
 const useSuperMarioCanvas = async (node) => {
   if (!node) return null;
   const context = node.getContext("2d");
 
-  const image = await loadImage("/img/tiles.jpg");
-  const sprites = new SpriteSheet(image, 16, 16);
-  sprites.define("ground", 0, 0);
-  sprites.define("sky", 3, 23);
+  const compositor = new Compositor();
 
-  const level = await loadLevel("1-1");
-  console.log(level);
-  level.backgrounds.forEach((background) => {
-    drawBackground(background, context, sprites);
-  });
+  const [backgroundSprites, marioSprites, level] = await Promise.all([
+    loadBackgroundSprites(),
+    loadMarioSprites(),
+    loadLevel("1-1"),
+  ]);
+  const backgroundLayer = createBackgroundLayer(
+    level.backgrounds,
+    backgroundSprites
+  );
+  compositor.layers.push(backgroundLayer);
+
+  const pos = { x: 0, y: 0 };
+
+  const spriteLayer = createSpriteLayer(marioSprites, pos);
+  compositor.layers.push(spriteLayer);
+
+  const update = () => {
+    compositor.draw(context);
+    pos.x += 2;
+    pos.y += 2;
+    requestAnimationFrame(update);
+  };
+  update();
 };
 
 export default useSuperMarioCanvas;
