@@ -1,7 +1,7 @@
 export const createBackgroundLayer = (backgrounds, sprites) => {
   const buffer = document.createElement("canvas");
-  buffer.width = 640;
-  buffer.height = 480;
+  buffer.width = 256;
+  buffer.height = 240;
 
   backgrounds.forEach((background) => {
     drawBackground(background, buffer.getContext("2d"), sprites);
@@ -20,4 +20,10 @@ export const drawBackground = (background, context, sprites) => {
       }
     }
   });
+};
+
+export const createSpriteLayer = (entity) => {
+  return (context) => {
+    entity.draw(context);
+  };
 };
